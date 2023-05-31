@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/Avendaosander/API-Accio-Potions#readme",
   "dependencies": {
+    "cloudinary": "^1.37.0",
     "cors": "^2.8.5",
     "dotenv": "^16.1.0",
     "express": "^4.18.2",
