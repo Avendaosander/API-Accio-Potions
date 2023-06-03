@@ -10,7 +10,7 @@ const cors = require("cors");
 const corsOptions = {
    credentials: true,
    origin: process.env.PATHCORS || '*',
-   methods: ['GET', 'POST']
+   methods: ['GET', 'POST', 'PUT', 'DELETE']
 };
 
 // Settings

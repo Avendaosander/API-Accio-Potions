@@ -19,6 +19,6 @@ router.put('/update-potion/:potionID', upload.single('imagen'), updatePotion)
 router.delete('/delete-potion/:potionID', deletePotion)
 
 // Buscar Pociones
-router.get('/search-potion', searchPotions)
+router.post('/search-potion', searchPotions)
 
 module.exports = router
