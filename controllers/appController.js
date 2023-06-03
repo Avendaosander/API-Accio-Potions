@@ -61,7 +61,9 @@ const createPotion = async (req, res) => {
       if (!req.file) return res.status(404).json({messageError: 'Debes agregar una imagen de la pocion'})
       const { path } = req.file;
 
-      const { nombre, descripcion, precio, cantidad, categoria, ingredientes } = req.body;
+      const { nombre, descripcion, precio, cantidad, categoria } = req.body;
+      const ingredientesString = req.body.ingredientes
+      const ingredientes = ingredientesString.split(',');
       let potion = await Pociones.findOne({ nombre });
       // console.log(potion);
       if (potion) {
@@ -84,9 +86,11 @@ const createPotion = async (req, res) => {
          ingrediente.cantidad -= cantidad;
          await ingrediente.save();
       }
+
+      const allIngredients = await Ingredientes.find().lean()
       
       await potion.save()
-      return res.status(200).send();
+      return res.status(200).json({potion, ingredientes: allIngredients});
    } catch (error) {
       // console.log(error.message);
       return res.status(500).json({messageError: error.message});
@@ -103,10 +107,12 @@ const updatePotion = async (req, res) => {
       }
    
       const { potionID } = req.params;
-      const update = req.body;
+      let update = req.body;
+      console.log(update)
       const cantidadNew = update.cantidad
-      const ingredientesNew = update.ingredientes || []
-      console.log(ingredientesNew)
+      const ingredientesArray = update.ingredientes.split(',')
+      update.ingredientes = ingredientesArray
+      const ingredientesNew = ingredientesArray || []
       
       let pocion = await Pociones.findById(potionID)
       const cantidadActual = pocion.cantidad
@@ -156,7 +162,9 @@ const updatePotion = async (req, res) => {
       }
 
       pocion = await Pociones.findByIdAndUpdate(potionID, update, {new: true})
-      return res.status(200).send()
+      const allIngredients = await Ingredientes.find().lean()
+
+      return res.status(200).json({potion: pocion, ingredientes: allIngredients})
    } catch (error) {
       return res.status(500).json({messageError: error.message});
    }
@@ -167,10 +175,11 @@ const deletePotion = async (req, res) => {
    try {
       const { potionID } = req.params;
       const pocion = await Pociones.findByIdAndDelete(potionID)
+      
+      if (!pocion) return res.status(404).json({messageError: 'Esta pocion no existe'})
+      
       const cantidad = pocion.cantidad
       const ingredientes = pocion.ingredientes
-
-      if (!pocion) return res.status(404).json({messageError: 'Esta pocion no existe'})
 
       await deleteImage(pocion.imagen.public_id)
 
@@ -182,7 +191,9 @@ const deletePotion = async (req, res) => {
          await ingrediente.save();
       }
 
-      return res.status(204).send()
+      const allIngredients = await Ingredientes.find().lean()
+
+      return res.status(200).json({potion: pocion, ingredientes: allIngredients})
    } catch (error) {
       return res.status(404).json({messageError: error.message});
    }
