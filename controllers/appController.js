@@ -101,64 +101,60 @@ const createPotion = async (req, res) => {
 const updatePotion = async (req, res) => {
    try {
       let path;
-      if (!!req.file) {
-         // console.log(`Se guardara el archivo: ${req.file.path}`);
-         path = req.file.path;
-      }
+      if (!!req.file) {path = req.file.path}
    
       const { potionID } = req.params;
       let update = req.body;
-      console.log(update)
-      const cantidadNew = update.cantidad
-      const ingredientesArray = update.ingredientes.split(',')
-      update.ingredientes = ingredientesArray
-      const ingredientesNew = ingredientesArray || []
-      
+
       let pocion = await Pociones.findById(potionID)
-      const cantidadActual = pocion.cantidad
-      const ingredientesActuales = pocion.ingredientes
-
-      let modificarIngredientes = []
-      let modificarCantidades = []
-      let acciones = []
-
-      ingredientesNew.forEach(ingredient => {
-         if (ingredientesActuales.includes(ingredient) || ingredientesNew.length === 0) {
-            if (cantidadActual > cantidadNew) {
-              modificarIngredientes.push(ingredient) 
-              modificarCantidades.push(cantidadActual - cantidadNew)
-              acciones.push('agregar')
-            }  else if (cantidadActual < cantidadNew) {
-              modificarIngredientes.push(ingredient) 
-              modificarCantidades.push(cantidadNew - cantidadActual)
-              acciones.push('eliminar')
-            }
-         } else{
-            modificarIngredientes.push(ingredient) 
-            modificarCantidades.push(cantidadActual)
-            acciones.push('agregar')
-         }
-      })
 
       if (path !== undefined) {
-         let pocion = await Pociones.findById(potionID)
          await deleteImage(pocion.imagen.public_id)
          const result = await uploadImagePotion(path)
          await fs.unlink(path)
          update.imagen = {public_id: result.public_id, secure_url: result.secure_url}
+      }
+
+      if (update.ingredientes || update.cantidad) {
+         console.log(update.ingredientes)
+         console.log(update.cantidad)
+         
+         if(update.ingredientes) {
+            const ingredientesArray = update.ingredientes.split(',')
+            update.ingredientes = ingredientesArray
+         }
+
+         const ingredientesNew = ingredientesArray || []
+         const cantidadNew = update.cantidad || 0
+
+         const cantidadActual = pocion.cantidad
+         const ingredientesActuales = pocion.ingredientes
+
+         let modificarIngredientes = []
+         let modificarCantidades = []
+         let acciones = []
+
+         ingredientesNew.forEach(ingredient => {
+            if (ingredientesActuales.includes(ingredient) || ingredientesNew.length === 0) {
+               if (cantidadActual > cantidadNew) {
+                 modificarIngredientes.push(ingredient) 
+                 modificarCantidades.push(cantidadActual - cantidadNew)
+                 acciones.push('agregar')
+               }  else if (cantidadActual < cantidadNew) {
+                 modificarIngredientes.push(ingredient) 
+                 modificarCantidades.push(cantidadNew - cantidadActual)
+                 acciones.push('eliminar')
+               }
+            } else{
+               modificarIngredientes.push(ingredient) 
+               modificarCantidades.push(cantidadActual)
+               acciones.push('agregar')
+            }
+         })
 
          if (modificarIngredientes.length > 0) {
             await modificarCantidadIngredientes(modificarIngredientes, modificarCantidades, acciones)
          }
-         pocion = await Pociones.findByIdAndUpdate(potionID, update, {new: true})
-         // console.log(pocion);
-         return res.status(200).send()
-      }
-
-      console.log(modificarIngredientes)
-      console.log(modificarCantidades)
-      if (modificarIngredientes.length > 0) {
-         await modificarCantidadIngredientes(modificarIngredientes, modificarCantidades, acciones)
       }
 
       pocion = await Pociones.findByIdAndUpdate(potionID, update, {new: true})
