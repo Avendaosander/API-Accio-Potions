@@ -116,17 +116,15 @@ const updatePotion = async (req, res) => {
       }
 
       if (update.ingredientes || update.cantidad) {
-         console.log(update.ingredientes)
-         console.log(update.cantidad)
          
          if(update.ingredientes) {
             const ingredientesArray = update.ingredientes.split(',')
             update.ingredientes = ingredientesArray
          }
 
-         const ingredientesNew = ingredientesArray || []
-         const cantidadNew = update.cantidad || 0
-
+         const ingredientesNew = update.ingredientes || []
+         const cantidadNew = update.cantidad || pocion.cantidad
+         
          const cantidadActual = pocion.cantidad
          const ingredientesActuales = pocion.ingredientes
 
@@ -134,23 +132,46 @@ const updatePotion = async (req, res) => {
          let modificarCantidades = []
          let acciones = []
 
-         ingredientesNew.forEach(ingredient => {
-            if (ingredientesActuales.includes(ingredient) || ingredientesNew.length === 0) {
-               if (cantidadActual > cantidadNew) {
-                 modificarIngredientes.push(ingredient) 
-                 modificarCantidades.push(cantidadActual - cantidadNew)
-                 acciones.push('agregar')
-               }  else if (cantidadActual < cantidadNew) {
-                 modificarIngredientes.push(ingredient) 
-                 modificarCantidades.push(cantidadNew - cantidadActual)
-                 acciones.push('eliminar')
+         if (ingredientesNew.length === 0 && cantidadNew !== cantidadActual) {
+            ingredientesActuales.forEach(ingredient => {
+               const diferencia = Math.abs(cantidadActual - cantidadNew);
+               if (diferencia > 0) {
+                  modificarIngredientes.push(ingredient);
+                  modificarCantidades.push(diferencia);
+                  acciones.push(cantidadActual > cantidadNew ? 'agregar' : 'eliminar');
                }
-            } else{
-               modificarIngredientes.push(ingredient) 
-               modificarCantidades.push(cantidadActual)
-               acciones.push('agregar')
-            }
-         })
+            });
+         } else if (ingredientesNew.length >= ingredientesActuales.length) {
+            ingredientesNew.forEach(ingredient => {
+               if (ingredientesActuales.includes(ingredient)) {
+                  const diferencia = Math.abs(cantidadActual - cantidadNew);
+                  if (diferencia > 0) {
+                     modificarIngredientes.push(ingredient);
+                     modificarCantidades.push(diferencia);
+                     acciones.push(cantidadActual > cantidadNew ? 'agregar' : 'eliminar');
+                  }
+               } else {
+                  modificarIngredientes.push(ingredient);
+                  modificarCantidades.push(cantidadNew);
+                  acciones.push('eliminar');
+               }
+            });
+         } else {
+            ingredientesActuales.forEach(ingredient => {
+               if (ingredientesNew.includes(ingredient) || ingredientesNew.length === 0) {
+                  const diferencia = Math.abs(cantidadActual - cantidadNew);
+                  if (diferencia > 0) {
+                     modificarIngredientes.push(ingredient);
+                     modificarCantidades.push(diferencia);
+                     acciones.push(cantidadActual > cantidadNew ? 'agregar' : 'eliminar');
+                  }
+               } else {
+                  modificarIngredientes.push(ingredient);
+                  modificarCantidades.push(cantidadActual);
+                  acciones.push('agregar');
+               }
+            });
+         }
 
          if (modificarIngredientes.length > 0) {
             await modificarCantidadIngredientes(modificarIngredientes, modificarCantidades, acciones)
