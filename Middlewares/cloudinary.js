@@ -15,7 +15,6 @@ const options = {
 };
  
 const potionsFolder = 'Accio potions/Pociones';
-const ingredientsFolder = 'Accio potions/Ingredientes';
  
 const uploadImage = async (imagePath, folder) => {
    const optionsWithFolder = { ...options, folder };
@@ -26,17 +25,11 @@ const uploadImagePotion = async (imagePath) => {
    return await uploadImage(imagePath, potionsFolder);
 };
 
-const uploadImageIngredient = async (imagePath) => {
-   return await uploadImage(imagePath, ingredientsFolder);
-};
- 
-
 const deleteImage = async (public_id) => {
    return await cloudinary.uploader.destroy(public_id);
 }
 
 module.exports = {
    uploadImagePotion,
-   uploadImageIngredient,
    deleteImage
 };
